@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Response Task</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root {
+    box-sizing: border-box;
+  }
+  html { height: 100%; }
+  *, *::before, *::after { box-sizing: inherit; }
+
+  body {
+    height: 100%;
+    margin: 0;
+    background: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  #app {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Landing screen — vertically centred, unrelated to claim positioning */
+  .landing-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .landing {
+    display: flex;
+    gap: 24px;
+  }
+  .landing button {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1px solid #000000;
+    background: #ffffff;
+    color: #000000;
+    font-size: 20px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .landing button:active { background: #f0f0f0; }
+
+  /* Claim screen — anchored at a fixed offset from the top, never centred.
+     This offset, and the spacing beneath the claim, is identical on every
+     screen regardless of which signal (or no signal) appears. */
+  .screen-wrap {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+  }
+  .screen {
+    position: absolute;
+    top: calc(112px + env(safe-area-inset-top, 0px));
+    left: 0;
+    right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  .claim {
+    font-size: 19px;
+    line-height: 1.6;
+    margin: 0 0 12px 0;
+  }
+  .signal {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #666666;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+  <div id="app"></div>
+
+<script>
+(function () {
+  var CLAIMS = {
+    C1: "As Commissioner for Works (2019-2023), Adaeze Nwosu was responsible for completing 40km of the Owerri Ring Road. 12km were completed during her tenure.",
+    C2: "As Commissioner for Health (2019-2023), Musa Bello was responsible for renovating 25 primary health centres in Kaduna State. 9 were renovated during his tenure.",
+    C3: "As Commissioner for Education (2019-2023), Folake Adeyemi was responsible for rebuilding 30 primary schools in Osun State. 11 were rebuilt during her tenure."
+  };
+
+  var SOURCE_B = {
+    C1: "Source: Imo State Ministry of Works annual report, 2023",
+    C2: "Source: Kaduna State Ministry of Health annual report, 2023",
+    C3: "Source: Osun State Ministry of Education annual report, 2023"
+  };
+
+  var SEQUENCES = {
+    1: [["C1", "A"], ["C2", "B"], ["C3", "C"], ["C2", "P"]],
+    2: [["C1", "B"], ["C2", "C"], ["C3", "A"], ["C1", "P"]],
+    3: [["C1", "C"], ["C2", "A"], ["C3", "B"], ["C3", "P"]]
+  };
+
+  var state = { screen: "landing", button: null, index: 0 };
+  var app = document.getElementById("app");
+
+  function renderSignal(claimKey, sig) {
+    if (sig === "A") return "";
+    if (sig === "B") return '<p class="signal">' + SOURCE_B[claimKey] + '</p>';
+    if (sig === "C") return '<p class="signal">Backed by 12 sources</p>';
+    if (sig === "P") return '<p class="signal">Source: Premium Times, March 2023</p>';
+    return "";
+  }
+
+  function render() {
+    if (state.screen === "landing") {
+      app.innerHTML =
+        '<div class="landing-wrap"><div class="landing">' +
+          '<button type="button" data-btn="1">1</button>' +
+          '<button type="button" data-btn="2">2</button>' +
+          '<button type="button" data-btn="3">3</button>' +
+        '</div></div>';
+      Array.prototype.forEach.call(app.querySelectorAll("button"), function (b) {
+        b.addEventListener("click", function (e) {
+          e.stopPropagation();
+          state.screen = "sequence";
+          state.button = parseInt(b.getAttribute("data-btn"), 10);
+          state.index = 0;
+          render();
+        });
+      });
+    } else {
+      var pair = SEQUENCES[state.button][state.index];
+      app.innerHTML =
+        '<div class="screen-wrap"><div class="screen">' +
+          '<p class="claim">' + CLAIMS[pair[0]] + '</p>' +
+          renderSignal(pair[0], pair[1]) +
+        '</div></div>';
+      app.querySelector(".screen-wrap").addEventListener("click", advance);
+    }
+  }
+
+  function advance() {
+    if (state.screen !== "sequence") return;
+    state.index += 1;
+    if (state.index >= 4) {
+      state.screen = "landing";
+      state.button = null;
+      state.index = 0;
+    }
+    render();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
